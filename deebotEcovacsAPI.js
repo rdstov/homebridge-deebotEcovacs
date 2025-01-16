@@ -347,5 +347,20 @@ DeebotEcovacsAPI.prototype = {
     vacBot.connect();
   },
 };
+DeebotEcovacsAPI.prototype.GetSpotAreas = function (vacBot, mapID) {
+    return new Promise((resolve, reject) => {
+        vacBot.run('GetSpotAreas', mapID, (err, areas) => {
+            if (err) {
+                this.log('ERROR - Unable to fetch spot areas: ' + err);
+                return reject(err);
+            }
+            this.log('INFO - Retrieved Spot Areas: ' + JSON.stringify(areas));
+            resolve(areas);
+        });
+    });
+};
+
+// Keep the inherits line here
+inherits(DeebotEcovacsAPI, EventEmitter);
 
 inherits(DeebotEcovacsAPI, EventEmitter);
