@@ -451,7 +451,7 @@ myDeebotEcovacsPlatform.prototype = {
                 if (!myDeebotEcovacsAccessory2) {
                   this.log('INFO - Creating SpotArea' + i + ' Accessory for ' + deebotName);
 
-                  myDeebotEcovacsAccessory2 = new Accessory(deebotName + 'SpotArea ' + i, uuid2);
+                  myDeebotEcovacsAccessory2 = new Accessory(`${switchName} (${deebotName})`, uuid2);
 
                   this.api.registerPlatformAccessories(
                     'homebridge-deebotecovacs',
