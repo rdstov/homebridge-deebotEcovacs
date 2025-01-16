@@ -221,8 +221,51 @@ myDeebotEcovacsPlatform.prototype = {
         this.log('INFO - Edge Cleaning for ' + deebotName + ' : ' + vacBot.hasEdgeCleaningMode());
         this.log('INFO - Spot Cleaning for ' + deebotName + ' : ' + vacBot.hasSpotCleaningMode());
         this.log(
-          'INFO - SpotArea Cleaning for ' + deebotName + ' : ' + vacBot.hasSpotAreaCleaningMode()
-        );
+          'INFO - SpotArea Cleaning for ' + deebotName + ' : ' + vacBot.hasSpotAreaCleaningMode());
+        // Discover available Spot Areas if the Deebot supports Spot Area Cleaning
+if (vacBot.hasSpotAreaCleaningMode()) {
+    vacBot.run('GetSpotAreas').then((spotAreas) => {
+        this.log(`INFO - Available Spot Areas for ${deebotName}:`, spotAreas);
+
+        // Save discovered areas for later configuration
+        this.discoveredSpotAreas = this.discoveredSpotAreas || {};
+        this.discoveredSpotAreas[deebotName] = spotAreas;
+
+        // Optional: Dynamically create switches for all discovered spot areas
+        spotAreas.forEach((area) => {
+            const areaName = area.name || `Spot Area ${area.id}`;
+            this.createSpotAreaSwitch(vacBot, deebotName, areaName, area.id);
+        });
+    }).catch((err) => {
+        this.log(`ERROR - Failed to fetch spot areas for ${deebotName}:`, err);
+    });
+}
+        createSpotAreaSwitch(vacBot, deebotName, areaName, areaId) {
+    const uuid = UUIDGen.generate(`${deebotName}-SpotArea-${areaId}`);
+    let accessory = this.foundAccessories.find((x) => x.UUID === uuid);
+
+    if (!accessory) {
+        this.log(`INFO - Creating Spot Area Switch for ${areaName} (${deebotName})`);
+        accessory = new Accessory(`${deebotName} ${areaName}`, uuid);
+
+        this.api.registerPlatformAccessories('homebridge-deebotecovacs', 'DeebotEcovacs', [accessory]);
+        this.foundAccessories.push(accessory);
+    }
+
+    accessory.name = `${deebotName} ${areaName}`;
+    accessory.getService(Service.AccessoryInformation)
+        .setCharacteristic(Characteristic.Manufacturer, vacBot.vacuum.company)
+        .setCharacteristic(Characteristic.Model, vacBot.deviceModel)
+        .setCharacteristic(Characteristic.SerialNumber, vacBot.vacuum.did);
+
+    const switchService = accessory.getService(Service.Switch) || 
+                          accessory.addService(Service.Switch, areaName);
+
+    this.bindSwitchOrderCharacteristic(accessory, switchService, ['SpotArea', 'start', areaId]);
+    this._confirmedServices.push(switchService);
+}
+
+
         this.log(
           'INFO - CustomArea Cleaning for ' +
             deebotName +
